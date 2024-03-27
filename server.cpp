@@ -9,6 +9,7 @@
 #include "Epoll.h"
 #include "InetAddress.h"
 #include "Socket.h"
+#include "Channel.h"
 
 void handleEvent(int clnt_sockfd);
 
@@ -17,30 +18,31 @@ int main() {
     InetAddress *serv_addr = new InetAddress("127.0.0.1", 8888);
     serv_sock->bind(serv_addr);
     serv_sock->listen();
-    
+    serv_sock->setnonblocking();
+
     Epoll *ep = new Epoll();
-    ep->addFd(serv_sock->getFd(), EPOLLIN | EPOLLET);
+    Channel *servChannel = new Channel(ep, serv_sock->getFd());
+    servChannel->enableReading();
 
     InetAddress *clnt_addr = new InetAddress();
-
     while (true) {
-        std::vector<epoll_event> events = ep->poll();
-        for (epoll_event event : events) {
-            if (event.data.fd == serv_sock->getFd()) {
+        std::vector<Channel*> activeChannels = ep->poll();
+        for (Channel* channel : activeChannels) {
+            if (channel->getFd() == serv_sock->getFd()) {
                 Socket clnt_sock(serv_sock->accept(clnt_addr));
                 printf("new client fd %d! IP: %s Port: %d\n", clnt_sock.getFd(), inet_ntoa(clnt_addr->serv_addr.sin_addr), ntohs(clnt_addr->serv_addr.sin_port));
-
                 clnt_sock.setnonblocking();
-                ep->addFd(clnt_sock.getFd(), EPOLLIN | EPOLLET);
-            } else if (event.events & EPOLLIN) {// readable event
-                handleEvent(event.data.fd);
+                Channel *clntChannel = new Channel(ep, clnt_sock.getFd()); // TODO: memory leak
+                clntChannel->enableReading();
+            } else if (channel->getRevents() & EPOLLIN) {// readable event
+                handleEvent(channel->getFd());
             } else {
                 printf("something else happened\n");
             }
         }
     }
     
-    delete serv_sock, serv_addr, clnt_addr;
+    delete serv_sock, serv_addr, clnt_addr, ep, servChannel;
     return 0;
 }
 
