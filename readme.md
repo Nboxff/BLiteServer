@@ -1,7 +1,7 @@
 # BLiteServer
 ## 项目说明
 
-改编自《30天自制C++服务器》。主要目的为复习C++高级程序设计。
+改编自《30天自制C++服务器》，实验项目主要目的为复习C++高级程序设计，并了解Linux网络编程技术。
 
 ## 项目记录
 
@@ -35,6 +35,8 @@ void errif(bool condition, const char *errmsg){
 > 
 > - [IO多路复用](https://mp.weixin.qq.com/s/YdIdoZ_yusVWza1PU7lWaw)
 > - [epoll高效运行的原理](https://www.zhihu.com/tardis/zm/art/159135478?source_id=1005)
+
+epoll是棵红黑树
 
 ### lab4 面向对象封装
 C++的`class`声明结束要有一个`;`
@@ -74,3 +76,38 @@ std::vector<Channel*> Epoll::poll(int timeout) {
 }
 ```
 
+### lab6 Reactor模式
+
+
+> VSCode中写完头文件，快速在`cpp`文件中添加函数实现：`Ctrl + . + Enter`
+
+> 阅读资料:
+>
+> - [如何深刻理解Reactor和Proactor](https://www.zhihu.com/question/26943938/answer/1856426252)
+
+EventLoop就是Reactor模式中的main-Reactor
+
+在创建`Channel`时传入处理事务的函数
+
+**函数对象**
+
+```cpp
+void setCallback(std::function<void()> callback);
+```
+
+- 需要引入头文件：`#include <functional>`
+
+- `std::function<void()>` 是一个模板类，用于表示可以调用的对象，例如函数、lambda 表达式或其他可调用的对象。在这里，它表示一个函数，该函数没有参数（即 () 中没有参数）且返回类型为 void。
+
+- 调用时像函数一样直接调用: `callback();`
+
+**std::bind 函数**
+
+```cpp
+std::function<void()> cb = std::bind(&Server::newConnection, this, serv_sock);
+```
+创建一个名为`cb`的可调用对象，该对象将在调用时执行` Server::newConnection`方法，并传递当前对象指针 `this` 和 `serv_sock` 参数。
+
+**迪米特法则**
+
+使用迪米特法则重构`Channel`类, Channel需要持有`EventLoop`对象的指针, 无需持有`Epoll`的指针

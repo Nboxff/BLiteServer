@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <unistd.h>
-#include "util.h"
+#include "src/util.h"
 
 
 int main() {
