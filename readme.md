@@ -111,3 +111,17 @@ std::function<void()> cb = std::bind(&Server::newConnection, this, serv_sock);
 **迪米特法则**
 
 使用迪米特法则重构`Channel`类, Channel需要持有`EventLoop`对象的指针, 无需持有`Epoll`的指针
+
+### lab7 Acceptor封装建立连接
+
+分离"接受连接"这一模块
+
+由`Acceptor`负责创建连接`Socket`, `Server`类负责管理`Acceptor`对象的生命周期
+
+**std::placeholders::_1 占位符**
+
+```cpp
+std::function<void(Socket*)> cb = std::bind(&Server::newConnection, this, std::placeholders::_1);
+```
+
+使用`std::bind`绑定一个成员函数时，有时需要将某些参数推迟到实际调用时再传递。`std::placeholders::_1`是一个特殊的占位符，它表示在绑定函数时的第一个参数位置。当我们调用绑定的函数时，`std::placeholders::_1`会被实际的参数值替换.
