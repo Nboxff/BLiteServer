@@ -3,6 +3,7 @@
 #include "Channel.h"
 #include <unistd.h>
 #include <cstring>
+#include <cstdio>
 
 #define MAX_EVENTS 1024
 Epoll::Epoll() : epfd(-1), events(nullptr) {

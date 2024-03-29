@@ -125,3 +125,36 @@ std::function<void(Socket*)> cb = std::bind(&Server::newConnection, this, std::p
 ```
 
 使用`std::bind`绑定一个成员函数时，有时需要将某些参数推迟到实际调用时再传递。`std::placeholders::_1`是一个特殊的占位符，它表示在绑定函数时的第一个参数位置。当我们调用绑定的函数时，`std::placeholders::_1`会被实际的参数值替换.
+
+### lab8 封装TCP连接Connection
+
+**类的组织与生命周期管理**
+
+由`Server`类负责创建`Acceptor`和`Connection`，并管理这两个类的生命周期。所以`Server::newConnection`和`Server::deleteConnection`这两个函数写在`Server`类中，通过函数对象传入`Acceptor`和`Connection`。
+
+`Server`类负责销毁`Acceptor`和`Connection`这两个类。
+
+`Acceptor`和`Connection`负责销毁`Connection`和`Socket`，实现了对象的回收。
+
+**debug记录**：忘记在初始化成员列表中初始化`EventLoop* loop, Socket* sock`。通过`printf`大法定位空指针问题。
+
+```cpp
+void Server::deleteConnection(Socket *sock) {
+    printf("debug\n");
+    Connection *conn = connections[sock->getFd()];
+    printf("debug\n");
+    connections.erase(sock->getFd());
+    delete conn;
+}
+```
+改进：多使用`assert()`
+```cpp
+void Server::deleteConnection(Socket *sock) {
+    assert(sock != nullptr);
+    Connection *conn = connections[sock->getFd()];
+    connections.erase(sock->getFd());
+    delete conn;
+}
+```
+
+

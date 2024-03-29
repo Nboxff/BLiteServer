@@ -14,7 +14,12 @@ Socket::Socket(int fd) : fd(fd) {
     errif(fd == -1, "socket create error");
 }
 
-Socket::~Socket() {}
+Socket::~Socket() {
+    if (fd != -1) {
+        close(fd);
+        fd = -1;
+    }
+}
 
 void Socket::bind(InetAddress* inet_address) {
     // call global scope bind function
