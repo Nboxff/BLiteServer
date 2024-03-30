@@ -348,3 +348,152 @@ lambda表达式完整形式：
 #define ANSI_RED "\033[91m"
 #define ANSI_RESET "\033[0m"
 ```
+
+### lab10 高性能线程池与高并发测试
+
+#### 函数模板
+
+通过函数模板可以编写与类型无关的代码，从而实现参数化多态。
+
+函数模板的声明格式如下：
+```cpp
+template <class T>
+返回类型 函数名(参数列表) {
+    // 函数体
+}
+```
+
+交换`Swap`函数的示例：
+```cpp
+template <class T>
+void Swap(T& a, T& b) {
+    T temp = a;
+    a = b;
+    b = temp;
+}
+```
+
+注意：函数模板的实现通常放在头文件（`.h` 文件）中，而不是单独的 `.cpp` 文件
+
+**变参数模板形参包** `template<class F, class... Args>`
+
+`class... Args` 是一个变参数模板形参包，表示函数的其他参数的类型。
+`Args` 可以接受零个或多个模板实参，因此它是一个可变参数。
+
+```cpp
+template<class F, class... Args>
+void myFunction(F func, Args... args) {
+    // 调用 func 并传递 args
+    func(args...);
+}
+
+// 示例用法
+void printInt(int x) {
+    std::cout << "Value: " << x << std::endl;
+}
+
+int main() {
+    myFunction(printInt, 42); // 调用 printInt(42)
+    return 0;
+}
+```
+
+### std::packaged_task
+`std::packaged_task` 是 C++ 标准库中的一个类模板，用于将可调用对象（如函数、lambda 表达式、绑定表达式或其他函数对象）包装成一个异步任务。
+
+- `std::packaged_task `可以将一个可调用对象链接到一个未来（`std::future`），用于多线程执行。
+- 它类似于 `std::function`，但返回类型是 `void`，并且可以获取其执行结果。
+
+```cpp
+#include <iostream>
+#include <thread>
+#include <future>
+#include <functional>
+
+int factorial(int n) {
+    int result = 1;
+    for (int i = 1; i <= n; ++i) {
+        result *= i;
+    }
+    return result;
+}
+
+int main() {
+    std::packaged_task<int(int)> task(factorial);
+    std::future<int> fut = task.get_future();
+
+    // 使用 std::move 将 task 对象的所有权转移到新线程中
+    std::thread t(std::move(task), 6);
+    t.join();
+
+    int result = fut.get();
+    std::cout << "Factorial of 6: " << result << std::endl;
+
+    return 0;
+}
+```
+
+#### 智能指针
+
+智能指针用于确保程序不存在内存和资源泄漏且是异常安全的。
+
+头文件：`<memory>`
+
+智能指针的类型：
+
+- `std::unique_ptr<T>`：独占资源所有权的指针。它负责删除原始指针指定的内存。
+
+    ```cpp
+    std::unique_ptr<Song> song(new Song("Say Goodbye"));
+    song->play();
+    // song 在超出作用域时自动删除
+    ```
+
+- `std::shared_ptr<T>`：共享资源所有权的指针。多个 `shared_ptr` 可以共享同一资源。
+
+    ```cpp
+    std::shared_ptr<Song> song(new Song("Say Goodbye"));
+    song->play();
+    // song 在不再被引用时自动删除
+    ```
+
+- `std::weak_ptr<T>`：共享资源的观察者，需要与 `shared_ptr` 一起使用，不影响资源的生命周期。
+
+创建智能指针：
+
+`std::make_shared` 用于创建 `std::shared_ptr`,`std::make_shared` 只进行一次内存分配，同时分配对象和引用计数控制块, 提高了内存分配效率。如果在构造对象时抛出异常，不会留下未被删除的引用计数控制块。此外，使用`std::make_shared`简化了代码，避免了直接使用 `new` 操作符。
+
+```cpp
+#include <memory>
+
+int main() {
+    // 使用 std::make_shared 创建共享指针
+    auto sp = std::make_shared<int>(42);
+    // sp 是一个指向整数的 std::shared_ptr
+    // ...
+    return 0;
+}
+```
+
+#### 右值引用
+
+1. **左值（lvalue）**：
+
+   - 左值是指存储在计算机内存中的对象，具有持久性。它们可以出现在赋值表达式的**左边**或**右边**。
+   - 例如，一个普通的变量就是左值，因为它在内存中有一个地址，可以被修改。
+   - 在C++中，左值可以被引用，也可以被修改。
+
+2. **右值（rvalue）**：
+
+   - 右值是指表达式结束后就不再存在的临时对象。它们通常出现在赋值表达式的**右边**。
+   - 例如，字面常量、临时对象、表达式求值过程中创建的无名临时对象都是右值。
+   - 右值一般是不可寻址的，因为它们没有持久性。
+
+3. **左值引用和右值引用**：
+
+   - **左值引用**：引用一个对象，绑定到左值。例如：`int &y = x;`，其中`y`引用了左值`x`。
+
+   - 右值引用：必须绑定到右值的引用，通过`&&`获得。C++11引入了右值引用，它可以实现“移动语义”。
+
+     - 例如：`int &&z3 = x * 6;`，其中`z3`是一个右值引用。
+     - 右值引用和相关的移动语义是C++11标准中引入的最强大的特性之一，通过 `std::move()` 可以避免无谓的复制，提高程序性能。
