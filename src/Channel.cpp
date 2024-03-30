@@ -29,7 +29,7 @@ void Channel::setCallback(std::function<void()> _callback) {
 }
 
 void Channel::handleEvent() {
-    callback();
+    loop->addThread(callback);
 }
 
 void Channel::setRevents(uint32_t revents) {
