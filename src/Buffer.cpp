@@ -6,9 +6,10 @@ Buffer::~Buffer() {}
 
 void Buffer::append(const char* _str, int _size) {
     const char* p = _str;
-    while (*p != '\0') {
+    int i = 0;
+    while (*p != '\0' && i < _size) {
         buf.push_back(*p);
-        p++;
+        p++; i++;
     }
 }
 

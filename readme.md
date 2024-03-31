@@ -398,6 +398,24 @@ int main() {
 }
 ```
 
+**推断函数返回值类型元编程工具**
+
+`typename std::result_of<F(Args...)>::type` 是一个在C++中用于推断函数返回值类型的元编程工具.
+
+1. `std::result_of` 是一个元编程库中的类型特性，它用于推断函数调用的结果类型。
+
+2. `<F(Args...)> `表示一个函数调用，其中 `F `是一个可调用对象（可以是函数指针、函数引用、成员函数指针或函数对象），而 `Args...` 是函数的参数类型。
+
+3. `::type` 是 `std::result_of` 的成员类型，它表示函数调用的返回类型。
+
+换句话说，`std::result_of<F(Args...)>::type` 推断了函数 `F` 在参数类型为 `Args...` 时的返回值类型。这在模板编程中非常有用，因为它允许我们根据函数的参数类型来确定返回值类型。
+
+需要注意的是，C++11 中的 `std::result_of` 在以下情况下的行为是未定义的：
+
+- 当 `INVOKE(std::declval<F>(), std::declval<ArgTypes>()...)` 不合法时（例如，当 F 根本不是可调用类型时）。
+
+- C++14 中对此进行了改进，当 `F` 不可调用时，`std::result_of<F(Args...)>` 简单地不具有 `type` 成员。
+
 ### std::packaged_task
 `std::packaged_task` 是 C++ 标准库中的一个类模板，用于将可调用对象（如函数、lambda 表达式、绑定表达式或其他函数对象）包装成一个异步任务。
 
@@ -497,3 +515,71 @@ int main() {
 
      - 例如：`int &&z3 = x * 6;`，其中`z3`是一个右值引用。
      - 右值引用和相关的移动语义是C++11标准中引入的最强大的特性之一，通过 `std::move()` 可以避免无谓的复制，提高程序性能。
+
+4. **完美转发**：
+
+    在C++中，`std::forward`被称为完美转发，其作用是保持原来的值属性不变。具体来说，如果原来的值是左值，经过 `std::forward` 处理后该值仍然是左值；如果原来的值是右值，经过 `std::forward` 处理后它仍然是右值。
+
+    ```cpp
+    #include <iostream>
+
+    template<typename T>
+    void print(T & t) {
+        std::cout << "左值" << std::endl;
+    }
+
+    template<typename T>
+    void print(T && t) {
+        std::cout << "右值" << std::endl;
+    }
+
+    template<typename T>
+    void testForward(T && v) {
+        print(v);
+        print(std::forward<T>(v));
+        print(std::move(v));
+    }
+
+    int main() {
+        testForward(1);
+        std::cout << "======================" << std::endl;
+        int x = 1;
+        testForward(x);
+    }
+    ```
+    输出结果：
+    ```
+    左值
+    右值
+    右值
+    ======================
+    左值
+    左值
+    右值
+    ```
+
+    - 从第一组结果中，我们可以看到，传入的 1 虽然是右值，但经过函数传参之后它变成了左值（在内存中分配了空间）；而第二行由于使用了 `std::forward` 函数，所以不会改变它的右值属性，因此会调用参数为右值引用的 `print` 模板函数；第三行，因为 `std::move` 会将传入的参数强制转成右值，所以结果一定是右值。
+
+    - 再来看看第二组结果。因为 `x` 变量是左值，所以第一行一定是左值；第二行使用 `std::forward` 处理，它依然会让其保持左值，所以第二行也是左值；最后一行使用 `std::move` 函数，因此一定是右值。
+
+#### C++命令行解析
+```cpp
+const char *optstring = "t:m:w:"; // 命令行选项的简写形式
+while ((o = getopt(argc, argv, optstring)) != -1) { // 遍历命令行参数，没有更多选项时返回 -1
+    switch (o) {
+        case 't':
+            threads = stoi(optarg);
+            break;
+        case 'm':
+            msgs = stoi(optarg);
+            break;
+        case 'w':
+            wait = stoi(optarg);
+            break;
+        case '?':
+            printf("error optopt: %c\n", optopt);
+            printf("error opterr: %d\n", opterr);
+            break;
+    }
+}
+```

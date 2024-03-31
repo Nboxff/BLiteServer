@@ -44,3 +44,8 @@ int Socket::getFd() {
 void Socket::setnonblocking() {
     fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) | O_NONBLOCK);
 }
+
+void Socket::connect(InetAddress* _addr) {
+    struct sockaddr_in addr = _addr->serv_addr;
+    errif(::connect(fd, (sockaddr*) &addr, sizeof(addr)) == -1, "socket connect error");
+}

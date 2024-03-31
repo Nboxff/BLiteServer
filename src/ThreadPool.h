@@ -5,6 +5,7 @@
 #include <functional>
 #include <mutex>
 #include <condition_variable>
+#include <future>
 
 class ThreadPool {
 private:
@@ -16,5 +17,27 @@ private:
 public:
     ThreadPool(int size = 10);
     ~ThreadPool();
-    void add(std::function<void()>);
+
+    template<class F, class... Args>
+    auto add(F&& f, Args&&... args) ->
+        std::future<typename std::result_of<F(Args...)>::type>;
 };
+
+template<class F, class... Args>
+auto ThreadPool::add(F&& f, Args&&... args) ->
+    std::future<typename std::result_of<F(Args...)>::type> {
+        using return_type = typename std::result_of<F(Args...)>::type;
+        auto task = std::make_shared<std::packaged_task<return_type()> > (
+            std::bind(std::forward<F>(f), std::forward<Args>(args)...)
+        );
+        std::future<return_type> res = task->get_future();
+        {
+            std::unique_lock<std::mutex> lock(tasks_mtx);
+            if (stop) {
+                throw std::runtime_error("enqueue on stopped ThreadPool");
+            }
+            tasks.emplace([task]() { (*task)(); });
+        } // auto unlock()
+        cv.notify_one();
+        return res;  // res is a std::future
+    }

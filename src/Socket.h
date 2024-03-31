@@ -14,5 +14,8 @@ public:
     int accept(InetAddress* clnt_addr);
     int getFd();
     void setnonblocking();
+
+    // for client
+    void connect(InetAddress *_addr);
 };
 
