@@ -1,11 +1,10 @@
+#include "util.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
 #include <unistd.h>
-#include "src/util.h"
-
 
 int main() {
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
