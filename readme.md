@@ -600,3 +600,22 @@ cmake -version # 查看版本，我的是3.22.1
 
 > 参考资料：
 > [CMake Tutorial](https://cmake.org/cmake/help/book/mastering-cmake/cmake/Help/guide/tutorial/index.html)
+
+---
+
+时间有限，出于复习C++的目的，实验到这里就结束了，总共11个lab，甚至比《30天自制C++服务器》内容还少一点。如果之后还有时间，没准会实现主从Reactor、HTTP支持等吧。
+
+回顾一下做了什么：
+
+- lab1&2  socket编程与错误处理
+- lab3  epoll实现高并发
+- lab4&5  面向对象封装
+- lab6  Reactor模式
+- lab7&8  封装连接
+- lab9  缓冲区与线程池(并发编程、lambda表达式)
+- lab10 高性能线程池(智能指针、右值引用、函数模板)
+- lab11 工程化(CMake)
+
+一点小小的遗憾，这个项目对C++继承、虚函数这块内容没有涉及，但考虑到上课时讲得比较多，应该也不算很大问题。
+
+完结撒花~ 也期待有时间能继续完善这个简易网络服务器（BLiteServer）。感谢《30天自制C++服务器》这个教程。
